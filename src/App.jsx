@@ -3,7 +3,6 @@ import { Modal, Button, Table, Form } from "react-bootstrap";
 
 const ContactsApp = () => {
   const [contacts, setContacts] = useState([]);
-  const [filteredContacts, setFilteredContacts] = useState([]);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
@@ -18,26 +17,13 @@ const ContactsApp = () => {
   useEffect(() => {
     const storedContacts = localStorage.getItem("contacts");
     if (storedContacts) {
-      const parsedContacts = JSON.parse(storedContacts);
-      setContacts(parsedContacts);
-      if (viewFavorites) {
-        setFilteredContacts(
-          parsedContacts.filter((contact) => contact.favorite)
-        );
-      } else {
-        setFilteredContacts(parsedContacts);
-      }
+      setContacts(JSON.parse(storedContacts));
     }
-  }, [viewFavorites]);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("contacts", JSON.stringify(contacts));
-    if (viewFavorites) {
-      setFilteredContacts(contacts.filter((contact) => contact.favorite));
-    } else {
-      setFilteredContacts(contacts);
-    }
-  }, [contacts, viewFavorites]);
+  }, [contacts]);
 
   const handleAddContact = () => {
     if (firstName && lastName && phone && gender) {
@@ -98,17 +84,35 @@ const ContactsApp = () => {
     setViewFavorites(false);
   };
 
+  const filteredContacts = viewFavorites
+    ? contacts.filter((contact) => contact.favorite)
+    : contacts.filter(
+        (contact) =>
+          contact.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          contact.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          contact.phone.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+
   return (
-    <div className="container">
-      <h1>Contacts</h1>
-      <Button onClick={() => setShowAddModal(true)}>Add Contact</Button>
-      <input
-        type="text"
-        className="form-control mt-3"
-        placeholder="Search contacts"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-      />
+    <div className="container mt-5">
+      <div className="head d-flex">
+        <input
+          type="text"
+          className="form-control m w-50"
+          placeholder="Search contacts"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <button className="btn btn-outline-dark ms-3" onClick={handleViewFavorites}>
+          Favorites
+        </button>
+        <button className="btn btn-outline-dark ms-2" onClick={handleViewAll}>
+          All
+        </button>
+        <button className="ms-2 btn btn-success" onClick={() => setShowAddModal(true)}>
+          Add Contact
+        </button>
+      </div>
       <Table striped bordered hover className="mt-3">
         <thead>
           <tr>
@@ -121,44 +125,27 @@ const ContactsApp = () => {
           </tr>
         </thead>
         <tbody>
-          {filteredContacts.map((contact, index) => {
-            if (
-              searchTerm === "" ||
-              contact.firstName
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase()) ||
-              contact.lastName
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase()) ||
-              contact.phone.toLowerCase().includes(searchTerm.toLowerCase())
-            ) {
-              return (
-                <tr key={index}>
-                  <td>{contact.firstName}</td>
-                  <td>{contact.lastName}</td>
-                  <td>{contact.phone}</td>
-                  <td>{contact.gender}</td>
-                  <td>
-                    <Button onClick={() => handleToggleFavorite(index)}>
-                      {contact.favorite
-                        ? "Remove from Favorites"
-                        : "Add to Favorites"}
-                    </Button>
-                  </td>
-                  <td>
-                    <Button onClick={() => handleEditContact(index)}>
-                      Edit
-                    </Button>
-                    <Button onClick={() => handleDeleteContact(index)}>
-                      Delete
-                    </Button>
-                  </td>
-                </tr>
-              );
-            } else {
-              return null;
-            }
-          })}
+          {filteredContacts.map((contact, index) => (
+            <tr key={index}>
+              <td>{contact.firstName}</td>
+              <td>{contact.lastName}</td>
+              <td>{contact.phone}</td>
+              <td>{contact.gender}</td>
+              <td width={300}>
+                <button className="btn btn-outline-info" onClick={() => handleToggleFavorite(index)}>
+                  {contact.favorite
+                    ? "Remove from Favorites"
+                    : "Add to Favorites"}
+                </button>
+              </td>
+              <td>
+                <button className="btn btn-outline-warning" onClick={() => handleEditContact(index)}>Edit</button>
+                <button className="btn btn-outline-danger ms-2" onClick={() => handleDeleteContact(index)}>
+                  Delete
+                </button>
+              </td>
+            </tr>
+          ))}
         </tbody>
       </Table>
 
